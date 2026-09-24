@@ -39,26 +39,34 @@ Usage: sync.sh [--from DIR] [--skills NAME,NAME...] [--list] [--remove]
 EOF
 }
 
-# Private repo: pick an auth method or fail with instructions.
-auth_mode() {
+# Private repo: put a snapshot of the repo at $1 (a directory). Tries, in
+# order: gh (authenticated), GH_TOKEN/GITHUB_TOKEN via curl, then plain git
+# (SSH keys, falling back to an HTTPS credential helper).
+obtain_repo() {
+  local dest="$1"
   if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    echo gh
+    gh api "repos/${REPO}/tarball/${BRANCH}" >"${dest}.tar.gz"
+    mkdir -p "$dest"
+    tar -xzf "${dest}.tar.gz" -C "$dest" --strip-components=1
+    rm -f "${dest}.tar.gz"
   elif [[ -n "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
-    echo token
-  else
-    die "no GitHub credentials. Run 'gh auth login' or export GH_TOKEN, then retry."
-  fi
-}
-
-# Download the repo tarball to $1.
-fetch_repo() {
-  local out="$1" mode
-  mode=$(auth_mode)
-  if [[ "$mode" == "gh" ]]; then
-    gh api "repos/${REPO}/tarball/${BRANCH}" >"$out"
-  else
     curl -fsSL -H "Authorization: Bearer ${GH_TOKEN:-${GITHUB_TOKEN}}" \
-      -o "$out" "https://api.github.com/repos/${REPO}/tarball/${BRANCH}"
+      -o "${dest}.tar.gz" "https://api.github.com/repos/${REPO}/tarball/${BRANCH}"
+    mkdir -p "$dest"
+    tar -xzf "${dest}.tar.gz" -C "$dest" --strip-components=1
+    rm -f "${dest}.tar.gz"
+  elif command -v git >/dev/null 2>&1; then
+    GIT_TERMINAL_PROMPT=0 \
+    GIT_SSH_COMMAND="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new" \
+      git clone --depth 1 --branch "${BRANCH}" --quiet \
+        "git@github.com:${REPO}.git" "$dest" \
+    || GIT_TERMINAL_PROMPT=0 \
+      git clone --depth 1 --branch "${BRANCH}" --quiet \
+        "https://github.com/${REPO}.git" "$dest" \
+    || die "git clone failed (tried SSH and HTTPS). Check GitHub credentials."
+    rm -rf "${dest}/.git"
+  else
+    die "no way to fetch ${REPO}: need gh (authed), GH_TOKEN, or git."
   fi
 }
 
@@ -204,9 +212,7 @@ case "$MODE" in
       stage "$FROM"
     else
       tmp=$(mktemp -d)
-      fetch_repo "${tmp}/repo.tar.gz"
-      mkdir -p "${tmp}/repo"
-      tar -xzf "${tmp}/repo.tar.gz" -C "${tmp}/repo" --strip-components=1
+      obtain_repo "${tmp}/repo"
       stage "${tmp}/repo"
       rm -rf "${tmp}"
     fi

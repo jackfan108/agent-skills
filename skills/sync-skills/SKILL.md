@@ -29,13 +29,23 @@ bash ~/.agent-skills/sync.sh --remove                 # remove links + cache
 3. Newly linked skills only appear after the harness reloads its skills
    (usually a session restart). Tell the user to restart if a new skill
    doesn't show up.
-4. If the script fails with "no GitHub credentials", tell the user to run
-   `gh auth login` (or export `GH_TOKEN`) and retry. On a fresh machine with
-   no skills at all, bootstrap instead with:
+4. If the fetch fails, the script tries in order: `gh` (authenticated),
+   `GH_TOKEN`/`GITHUB_TOKEN`, then plain `git` (SSH, then HTTPS). If all
+   fail, tell the user to fix one of those and retry. On a fresh machine
+   with no skills at all, bootstrap with any of:
 
    ```bash
+   # gh available and authenticated
    gh api repos/jackfan108/agent-skills/contents/install.sh \
      -H "Accept: application/vnd.github.raw" | bash
+
+   # GH_TOKEN/GITHUB_TOKEN in the environment
+   curl -fsSL -H "Authorization: Bearer ${GH_TOKEN:-$GITHUB_TOKEN}" \
+     https://raw.githubusercontent.com/jackfan108/agent-skills/main/install.sh | bash
+
+   # only git (SSH keys or HTTPS credential helper)
+   git clone --depth 1 git@github.com:jackfan108/agent-skills.git /tmp/agent-skills \
+     && bash /tmp/agent-skills/install.sh --from /tmp/agent-skills
    ```
 
 5. Never edit files under `~/.agent-skills/src` — it is a disposable cache
