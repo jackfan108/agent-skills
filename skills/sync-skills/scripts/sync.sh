@@ -39,35 +39,13 @@ Usage: sync.sh [--from DIR] [--skills NAME,NAME...] [--list] [--remove]
 EOF
 }
 
-# Private repo: put a snapshot of the repo at $1 (a directory). Tries, in
-# order: gh (authenticated), GH_TOKEN/GITHUB_TOKEN via curl, then plain git
-# (SSH keys, falling back to an HTTPS credential helper).
+# Download a snapshot of the public repo into $1 (a directory).
 obtain_repo() {
   local dest="$1"
-  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-    gh api "repos/${REPO}/tarball/${BRANCH}" >"${dest}.tar.gz"
-    mkdir -p "$dest"
-    tar -xzf "${dest}.tar.gz" -C "$dest" --strip-components=1
-    rm -f "${dest}.tar.gz"
-  elif [[ -n "${GH_TOKEN:-${GITHUB_TOKEN:-}}" ]]; then
-    curl -fsSL -H "Authorization: Bearer ${GH_TOKEN:-${GITHUB_TOKEN}}" \
-      -o "${dest}.tar.gz" "https://api.github.com/repos/${REPO}/tarball/${BRANCH}"
-    mkdir -p "$dest"
-    tar -xzf "${dest}.tar.gz" -C "$dest" --strip-components=1
-    rm -f "${dest}.tar.gz"
-  elif command -v git >/dev/null 2>&1; then
-    GIT_TERMINAL_PROMPT=0 \
-    GIT_SSH_COMMAND="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new" \
-      git clone --depth 1 --branch "${BRANCH}" --quiet \
-        "git@github.com:${REPO}.git" "$dest" \
-    || GIT_TERMINAL_PROMPT=0 \
-      git clone --depth 1 --branch "${BRANCH}" --quiet \
-        "https://github.com/${REPO}.git" "$dest" \
-    || die "git clone failed (tried SSH and HTTPS). Check GitHub credentials."
-    rm -rf "${dest}/.git"
-  else
-    die "no way to fetch ${REPO}: need gh (authed), GH_TOKEN, or git."
-  fi
+  mkdir -p "$dest"
+  curl -fsSL "https://github.com/${REPO}/archive/refs/heads/${BRANCH}.tar.gz" \
+    | tar -xz -C "$dest" --strip-components=1 \
+    || die "failed to download ${REPO}@${BRANCH}"
 }
 
 # Stage a repo snapshot into the cache via an atomic swap. $1 = repo root.

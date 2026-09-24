@@ -1,11 +1,11 @@
 ---
 name: sync-skills
-description: Sync, update, list, or remove the user's personal agent skills from the private jackfan108/agent-skills repo. Use when the user asks to "sync my skills", update or refresh their skills, install their skills on a new machine, or remove them.
+description: Sync, update, list, or remove the user's personal agent skills from the jackfan108/agent-skills repo. Use when the user asks to "sync my skills", update or refresh their skills, install their skills on a new machine, or remove them.
 ---
 
 # Sync skills
 
-The user's personal skills live in the private GitHub repo
+The user's personal skills live in the GitHub repo
 `jackfan108/agent-skills`. This skill keeps local copies in sync across
 harnesses (Claude Code, Codex, Cursor, OpenCode) by symlinking each skill
 into `~/.claude/skills/` and `~/.agents/skills/`. The repo snapshot is
@@ -29,23 +29,10 @@ bash ~/.agent-skills/sync.sh --remove                 # remove links + cache
 3. Newly linked skills only appear after the harness reloads its skills
    (usually a session restart). Tell the user to restart if a new skill
    doesn't show up.
-4. If the fetch fails, the script tries in order: `gh` (authenticated),
-   `GH_TOKEN`/`GITHUB_TOKEN`, then plain `git` (SSH, then HTTPS). If all
-   fail, tell the user to fix one of those and retry. On a fresh machine
-   with no skills at all, bootstrap with any of:
+4. On a fresh machine with no skills at all, bootstrap with:
 
    ```bash
-   # gh available and authenticated
-   gh api repos/jackfan108/agent-skills/contents/install.sh \
-     -H "Accept: application/vnd.github.raw" | bash
-
-   # GH_TOKEN/GITHUB_TOKEN in the environment
-   curl -fsSL -H "Authorization: Bearer ${GH_TOKEN:-$GITHUB_TOKEN}" \
-     https://raw.githubusercontent.com/jackfan108/agent-skills/main/install.sh | bash
-
-   # only git (SSH keys or HTTPS credential helper)
-   git clone --depth 1 git@github.com:jackfan108/agent-skills.git /tmp/agent-skills \
-     && bash /tmp/agent-skills/install.sh --from /tmp/agent-skills
+   curl -fsSL https://raw.githubusercontent.com/jackfan108/agent-skills/main/install.sh | bash
    ```
 
 5. Never edit files under `~/.agent-skills/src` — it is a disposable cache

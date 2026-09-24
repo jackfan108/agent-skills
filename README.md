@@ -1,25 +1,12 @@
 # agent-skills
 
 Personal agent skills, synced into every harness via the [Agent Skills open
-standard](https://agentskills.io). Private repo — requires `gh` (authenticated)
-or `GH_TOKEN` in the environment.
+standard](https://agentskills.io).
 
 ## Install
 
-Any of these work (the scripts try gh → token → git in that order):
-
 ```bash
-# gh available and authenticated
-gh api repos/jackfan108/agent-skills/contents/install.sh \
-  -H "Accept: application/vnd.github.raw" | bash
-
-# GH_TOKEN/GITHUB_TOKEN in the environment
-curl -fsSL -H "Authorization: Bearer ${GH_TOKEN:-$GITHUB_TOKEN}" \
-  https://raw.githubusercontent.com/jackfan108/agent-skills/main/install.sh | bash
-
-# only git (SSH keys or an HTTPS credential helper)
-git clone --depth 1 git@github.com:jackfan108/agent-skills.git /tmp/agent-skills \
-  && bash /tmp/agent-skills/install.sh --from /tmp/agent-skills
+curl -fsSL https://raw.githubusercontent.com/jackfan108/agent-skills/main/install.sh | bash
 ```
 
 This links every skill into `~/.claude/skills/` (Claude Code) and
@@ -40,6 +27,8 @@ bash ~/.agent-skills/sync.sh
 | Skill | Purpose |
 | --- | --- |
 | `sync-skills` | Fetch this repo and symlink all skills into every harness |
+| `sync` | Quick Graphite restack push: `gt sync`, resolve conflicts, submit the stack |
+| `pr-comments` | 👍 and resolve every PR comment; fix valid ones, reply plainly to the rest |
 
 ## Layout & conventions
 
