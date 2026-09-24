@@ -1,6 +1,6 @@
 ---
 name: pr-comments
-description: Work through the review comments on a pull request — react 👍 to every comment, resolve each thread, fix the valid points in new commits, and reply to the rest with a short plain-English explanation. Use when the user asks to address, go through, or handle PR or review comments.
+description: Work through the review comments on a pull request. React 👍 to every comment, fix the valid points in new commits, reply briefly to each one, and resolve every thread. Use when the user asks to address, go through, or handle PR or review comments.
 ---
 
 # PR comments
@@ -12,20 +12,37 @@ tools).
 For each comment, in order:
 
 1. Add a 👍 reaction.
-2. If the comment is right: make the change in a new commit — don't amend
+2. If the comment is right, make the change in a new commit. Don't amend
    existing commits. A short message like "address review: <topic>" works.
-3. If the comment doesn't make sense: reply with one or two sentences
-   explaining why, before anything else in the thread.
-4. Resolve the thread — every single one gets resolved, whether fixed or
-   answered.
+3. Reply in the thread (see below).
+4. Resolve the thread. Every single one gets resolved, fixed or not.
 
 When all comments are handled, push the new commits.
 
-## How to write the replies
+## Replies
 
-- Write like a person talking to a teammate, not a changelog.
-- Assume the reader has no context on this code.
-- Short sentences. One idea per sentence.
-- Plain words only — no jargon, no invented terms, and don't pack several
-   concepts into one sentence. If an explanation needs two simple sentences,
-   write two simple sentences.
+Keep replies to one to three short sentences. Aim for a third to half of
+what you'd naturally write. Go longer only if the reply is useless without it.
+
+- Fixed: `Fixed: <what changed>.` Add a sentence or two only if the
+  reviewer needs to know something new, like a rollout step.
+- Not fixing: `Not changing this: <why, in plain words>.`
+
+Example. The comment says the new option breaks if the frontend deploys
+before the backend.
+
+- Too long (136 words): "Confirmed — good catch. I reproduced this by
+  compiling the filter through the older code path... Fixed in f32f681: the
+  option is now gated behind a new flag..."
+- Right (37 words): "Fixed: the option is now behind a new flag that's off
+  by default. We'll turn it on in each environment after the backend change
+  ships there. Filters saved while it's on still work if it's turned off."
+
+Style:
+
+- Sound like a teammate, not a report. No preamble like "Confirmed" or
+  "Great point".
+- Don't retell the problem. The reviewer already wrote it.
+- Don't explain how you checked it or cite commit hashes.
+- No em dashes or `--`. Use a period or a comma instead.
+- Plain words. No jargon, no invented terms, one idea per sentence.
